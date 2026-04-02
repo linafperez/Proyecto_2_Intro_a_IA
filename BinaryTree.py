@@ -1,7 +1,6 @@
 from BinaryTreeNode import BinaryTreeNode
 from collections import deque
 
-
 class BinaryTree:
     def __init__(self):
         self.root = None
@@ -78,179 +77,178 @@ class BinaryTree:
                 queue.append(node.right_child)
 
         return result
-
-    @staticmethod
-    # Convert a string into a list of tokens
+    
     def tokenize(rule):
 
         tokens = []
         i = 0
 
-        # Process every character in the input string
         while i < len(rule):
 
-            # Skip whitespace characters
+            # Skip spaces
             if rule[i].isspace():
                 i += 1
                 continue
 
-            # Treat parentheses as individual tokens
-            if rule[i] in "()":
+            # Brackets
+            if rule[i] in "[]":
                 tokens.append(rule[i])
                 i += 1
                 continue
 
-            # Treat the implication operator "->" as a single token
+            # Biconditional
+            if rule[i:i+3] == "<->":
+                tokens.append("<->")
+                i += 3
+                continue
+
+            # Implication
             if rule[i:i+2] == "->":
                 tokens.append("->")
                 i += 2
                 continue
 
-            # Read a complete word (predicate, variable, constant, or keyword)
-            # Continue until a space or parenthesis is found
+            # Read full token
             j = i
-            while i < len(rule) and not rule[i].isspace() and rule[i] not in "()":
+            paren_count = 0
+
+            while i < len(rule):
+                if rule[i] == "(":
+                    paren_count += 1
+                elif rule[i] == ")":
+                    paren_count -= 1
+
+                # Stop if space or bracket AND not inside predicate
+                if paren_count == 0 and (rule[i].isspace() or rule[i] in "[]"):
+                    break
+
                 i += 1
 
-            # Extract and store the token
             tokens.append(rule[j:i])
 
         return tokens
-
-    # Parsing by precedence
-    @staticmethod
-    def parse_implication(tokens, index):
-        left = BinaryTree.parse_or(tokens, index)
-
-        while index[0] < len(tokens) and tokens[index[0]] == "->":
-            op = tokens[index[0]]
-            index[0] += 1
-
-            right = BinaryTree.parse_implication(tokens, index)
-
-            node = BinaryTreeNode(op)
-            node.set_left_child(left)
-            node.set_right_child(right)
-
-            left = node
-
-        return left
     
-    @staticmethod
-    def parse_or(tokens, index):
-        left = BinaryTree.parse_and(tokens, index)
+    # Shunting yard algorithm implementation 
+    def infix_to_postfix(rule):
 
-        while index[0] < len(tokens) and tokens[index[0]] == "OR":
-            op = tokens[index[0]]
-            index[0] += 1
-
-            right = BinaryTree.parse_and(tokens, index)
-
-            node = BinaryTreeNode(op)
-            node.set_left_child(left)
-            node.set_right_child(right)
-
-            left = node
-
-        return left
-    
-    @staticmethod
-    def parse_and(tokens, index):
-        left = BinaryTree.parse_not(tokens, index)
-
-        while index[0] < len(tokens) and tokens[index[0]] == "AND":
-            op = tokens[index[0]]
-            index[0] += 1
-
-            right = BinaryTree.parse_not(tokens, index)
-
-            node = BinaryTreeNode(op)
-            node.set_left_child(left)
-            node.set_right_child(right)
-
-            left = node
-
-        return left
-    
-    @staticmethod
-    def parse_not(tokens, index):
-        if tokens[index[0]] == "NOT":
-            index[0] += 1
-            child = BinaryTree.parse_not(tokens, index)
-
-            node = BinaryTreeNode("NOT")
-            node.set_left_child(child)
-
-            return node
-
-        return BinaryTree.parse_quantifier(tokens, index)
-    
-    @staticmethod
-    def parse_quantifier(tokens, index):
-        if tokens[index[0]] in ["FORALL", "EXISTS"]:
-            quantifier = tokens[index[0]]
-            index[0] += 1
-
-            variable = tokens[index[0]]
-            index[0] += 1
-
-            # Create quantifier node
-            node = BinaryTreeNode(quantifier)
-            node.set_left_child(BinaryTreeNode(variable))
-
-            # Parse body (can be parenthesized)
-            if tokens[index[0]] == "(":
-                index[0] += 1
-                subtree = BinaryTree.parse_implication(tokens, index)
-                index[0] += 1  # skip ')'
-            else:
-                subtree = BinaryTree.parse_implication(tokens, index)
-
-            node.set_right_child(subtree)
-
-            return node
-
-        return BinaryTree.parse_atom(tokens, index)
-    
-    @staticmethod
-    def parse_atom(tokens, index):
-        token = tokens[index[0]]
-        index[0] += 1
-
-        # Case 1: Parenthesized expression
-        if token == "(":
-            node = BinaryTree.parse_implication(tokens, index)
-            index[0] += 1  # skip ')'
-            return node
-
-        # Case 2: Predicate like Animal(X)
-        if "(" in token:
-            name = token[:token.index("(")]
-            args = token[token.index("(")+1:-1].split(",")
-
-            node = BinaryTreeNode(name)
-
-            if len(args) >= 1:
-                node.set_left_child(BinaryTreeNode(args[0]))
-            if len(args) >= 2:
-                node.set_right_child(BinaryTreeNode(args[1]))
-
-            return node
-
-        # Case 3: Variable or constant
-        return BinaryTreeNode(token)
-
-    @staticmethod
-    # Build an expression tree from a first-order logic rule.
-    def build_expression_tree(rule):
-
-        # Tokenize the input string
         tokens = BinaryTree.tokenize(rule)
 
-        # Use an index pointer to traverse tokens
-        index = [0]
+        output = []
+        op_stack = []
 
-        # Parse the expression
-        root = BinaryTree.parse_implication(tokens, index)
+        precedence = {
+            "FORALL": 6,
+            "EXISTS": 6,
+            "NOT": 5,
+            "AND": 4,
+            "OR": 3,
+            "->": 2,
+            "<->": 1
+        }
 
-        return root
+        operators = set(precedence.keys())
+
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+
+            # CASE 1: operand (predicate, variable, constant)
+            if token not in operators and token not in ["[", "]"]:
+                output.append(token)
+
+            # CASE 2: opening bracket
+            elif token == "[":
+                op_stack.append(token)
+
+            # CASE 3: closing bracket
+            elif token == "]":
+                while op_stack and op_stack[-1] != "[":
+                    output.append(op_stack.pop())
+                op_stack.pop()  # remove "["
+
+            # CASE 4: unary operators (FORALL, EXISTS, NOT)
+            elif token in ["FORALL", "EXISTS", "NOT"]:
+                op_stack.append(token)
+
+            # CASE 5: binary operators
+            else:
+                while (op_stack and op_stack[-1] != "[" and precedence.get(op_stack[-1], 0) >= precedence[token]):
+                    output.append(op_stack.pop())
+
+                op_stack.append(token)
+
+            i += 1
+
+        # Empty stack
+        while op_stack:
+            output.append(op_stack.pop())
+
+        return output
+    
+    def build_expression_tree(rule):
+
+        postfix = BinaryTree.infix_to_postfix(rule)
+
+        stack = []
+
+        binary_ops = {"AND", "OR", "->", "<->"}
+        unary_ops = {"NOT"}
+
+        i = 0
+        while i < len(postfix):
+            token = postfix[i]
+
+            # CASE 1: binary operator
+            if token in binary_ops:
+                right = stack.pop()
+                left = stack.pop()
+
+                node = BinaryTreeNode(token)
+                node.set_left_child(left)
+                node.set_right_child(right)
+
+                stack.append(node)
+
+            # CASE 2: unary operator
+            elif token in unary_ops:
+                child = stack.pop()
+
+                node = BinaryTreeNode(token)
+                node.set_left_child(child)
+
+                stack.append(node)
+
+            # CASE 3: quantifiers
+            elif token in ["FORALL", "EXISTS"]:
+                formula = stack.pop()
+                variable = stack.pop()
+
+                node = BinaryTreeNode(token)
+                node.set_left_child(variable)
+                node.set_right_child(formula)
+
+                stack.append(node)
+
+            # CASE 4: predicate
+            elif "(" in token:
+                name = token[:token.index("(")]
+                args_str = token[token.index("(")+1:-1]
+                args = [a.strip() for a in args_str.split(",")]
+
+                node = BinaryTreeNode(f"{name}()")
+
+                if len(args) >= 1:
+                    node.set_left_child(BinaryTreeNode(args[0]))
+
+                if len(args) >= 2:
+                    node.set_right_child(BinaryTreeNode(args[1]))
+
+                stack.append(node)
+
+            # CASE 5: variable / constant
+            else:
+                stack.append(BinaryTreeNode(token))
+
+            i += 1
+
+        return stack.pop()
