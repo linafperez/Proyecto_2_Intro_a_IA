@@ -1,13 +1,8 @@
-FORALL x ( (EXISTS y (Animal(y) AND Ama(x,y))) -> EXISTS z Ama(z,x) )
+1 FORALL X [FORALL Y [Animal(Y) -> Ama(X,Y)] -> EXISTS Z Ama(Z,X)]
+2 FORALL X [EXISTS Y [Animal(Y) AND Mata(X,Y)] -> FORALL Z NOT Ama(Z,X)]
+3 FORALL X [Animal(X) -> Ama(Jack, X)]
+4 Gato(Tuna) AND [Mata(Jack, Tuna) OR Mata(Curiosidad, Tuna)]
+5 FORALL X [Gato(X) -> Animal(X)]
+Q Mata(Curiosidad, Tuna)
 
-FORALL x ( (EXISTS y (Animal(y) AND Mata(x,y))) -> NOT EXISTS z Ama(z,x) )
 
-FORALL y ( Animal(y) -> Ama(Jack, y) )
-
-Gato(Tuna)
-
-Mata(Jack, Tuna) OR Mata(Curiosidad, Tuna)
-
-FORALL x ( Gato(x) -> Animal(x) )
-
-QUERY: Mata(Curiosidad, Tuna)

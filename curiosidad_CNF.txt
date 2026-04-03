@@ -1,0 +1,8 @@
+1 Animal(F0(X)) OR Ama(F1(X), X)
+2 NOT Ama(X, F0(X)) OR Ama(F1(X), X)
+3 [NOT Animal(Y) OR NOT Mata(X, Y)] OR NOT Ama(Z, X)
+4 NOT Animal(X) OR Ama(Jack, X)
+5 Gato(Tuna)
+6 Mata(Jack, Tuna) OR Mata(Curiosidad, Tuna)
+7 NOT Gato(X) OR Animal(X)
+Q Mata(Curiosidad, Tuna)

@@ -136,15 +136,8 @@ class BinaryTree:
         output = []
         op_stack = []
 
-        precedence = {
-            "FORALL": 6,
-            "EXISTS": 6,
-            "NOT": 5,
-            "AND": 4,
-            "OR": 3,
-            "->": 2,
-            "<->": 1
-        }
+        # Higher values indicate higher priority
+        precedence = { "FORALL": 6, "EXISTS": 6, "NOT": 5, "AND": 4, "OR": 3, "->": 2, "<->": 1}
 
         operators = set(precedence.keys())
 

@@ -1,5 +1,6 @@
 import sys
 from BinaryTree import BinaryTree
+from BinaryTreeNode import BinaryTreeNode
 
 # Ensure that an input file is provided as a command-line argument
 if len(sys.argv) < 2:
@@ -491,3 +492,86 @@ def extract_clauses(node):
 
     # Otherwise, this is a single clause
     return [node]
+
+CNF = []
+
+# Apply all transformations to convert from FOL to Conjunctive Normal Form
+for rule in rules:
+
+    node = del_biconditional(rule)
+    node = del_implication(node)
+    node = apply_negation(node)
+    node = standardize_variables(node)
+    node = move_quantifiers_left(node)
+    node = skolemize(node)
+    node = remove_universal_quantifiers(node)
+    node = distribute_or_over_and(node)
+
+    CNF.extend(extract_clauses(node))
+
+# Converts an expression tree into its infix representation with explicit brackets
+def tree_to_infix(node, is_root=True):
+    # Base case: empty node
+    if node is None:
+        return ""
+
+    data = node.data
+
+    # Define operator categories
+    binary_ops = {"AND", "OR", "->", "<->"}
+    unary_ops = {"NOT"}
+    quantifiers = {"FORALL", "EXISTS"}
+
+    # Case 1: binary operator (AND, OR, ->, <->)
+    if data in binary_ops:
+        left = tree_to_infix(node.left_child, False)
+        right = tree_to_infix(node.right_child, False)
+        
+        expr = f"{left} {data} {right}"
+        return expr if is_root else f"[{expr}]"
+
+    # Case 2: unary operator (NOT)
+    elif data in unary_ops:
+        child = tree_to_infix(node.left_child, False)
+        
+        expr = f"{data} {child}"
+        return expr 
+
+    # Case 3: quantifiers (FORALL, EXISTS)
+    elif data in quantifiers:
+        var = tree_to_infix(node.left_child, False)
+        formula = tree_to_infix(node.right_child, False)
+        
+        expr = f"{data} {var} {formula}"
+        return expr if is_root else f"[{expr}]"
+
+    # Case 4: predicate (P(x, y))
+    elif "()" in data:
+        name = data.replace("()", "")
+        args = []
+
+        if node.left_child:
+            args.append(tree_to_infix(node.left_child, False))
+        if node.right_child:
+            args.append(tree_to_infix(node.right_child, False))
+
+        return f"{name}({', '.join(args)})"
+
+    # Case 5: variable or constant (leaf node)
+    else:
+        return data
+
+# Build output filename
+output_filename = input_filename.split(".")[0] + "_CNF.txt"
+
+# Open output file in write mode
+with open(output_filename, "w") as f:
+    for i, tree in enumerate(CNF, start=1):
+        # Convert each tree to infix notation
+        infix_expr = tree_to_infix(tree) 
+
+        # Write expression to file
+        f.write(f"{i} {infix_expr}\n")
+    
+    # Write query
+    f.write(f"Q {query}\n")
