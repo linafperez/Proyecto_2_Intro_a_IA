@@ -1,0 +1,8 @@
+1 Hombre(Marco)
+2 Pompeyano(Marco)
+3 [FORALL X Pompeyano(X)] -> Romano(X)
+4 Gobernante(Cesar)
+5 [FORALL X Romano(X)] -> [Leal(X, Cesar) OR Odia(X,Cesar)]
+6 FORALL X FORALL Y [Hombre(X) AND Gobernante(Y) AND IntentaAsesinar(X,Y)] -> [NOT Leal(X,Y)]
+7 IntentaAsesinar(Marco,Cesar)
+Q Odia(Marco,Cesar)

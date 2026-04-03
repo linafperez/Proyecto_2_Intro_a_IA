@@ -1,0 +1,8 @@
+1 Hombre(Marco)
+2 Pompeyano(Marco)
+3 NOT Pompeyano(K0) OR Romano(K0)
+4 Gobernante(Cesar)
+5 NOT Romano(K1) OR [Leal(K1, Cesar) OR Odia(K1, Cesar)]
+6 [[NOT Hombre(K2) OR NOT Gobernante(K3)] OR NOT IntentaAsesinar(K2, K3)] OR NOT Leal(K2, K3)
+7 IntentaAsesinar(Marco, Cesar)
+Q Odia(Marco,Cesar)

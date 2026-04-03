@@ -339,6 +339,9 @@ def replace_variable(node, var, value_node):
 
     return node
 
+k_counter = [0]
+f_counter = [0]
+
 def skolemize(node, universal_vars=None, counter=[0]):
 
     # Base case: empty node
@@ -367,21 +370,20 @@ def skolemize(node, universal_vars=None, counter=[0]):
         # - If there are no universal variables in scope, use a constant (K_i)
         # - Otherwise, use a function (F_i) with current universal variables as arguments
         if not universal_vars:
-            name = f"K{counter[0]}"
-            args = []
+            # Create constant
+            skolem_node = BinaryTreeNode(f"K{k_counter[0]}")
+            k_counter[0] += 1
         else:
-            name = f"F{counter[0]}"
-            args = universal_vars
+            # Create Skolem function
+            name = f"F{f_counter[0]}"
+            skolem_node = build_skolem_term(name, universal_vars)
+            f_counter[0] += 1
 
         counter[0] += 1
 
-        # Build the Skolem term as a subtree
-        skolem_node = build_skolem_term(name, args)
-
-        # Replace all occurrences of the variable in the subtree
+        # Replace variable in subtree
         replaced = replace_variable(node.right_child, var, skolem_node)
 
-        # Continue processing after removing the existential quantifier
         return skolemize(replaced, universal_vars, counter)
 
     # Recursive case: process both children
