@@ -1,0 +1,5 @@
+1 FORALL X [SucesionReal(X) AND Cauchy(X) -> Convergente(X)]
+2 FORALL X [Convergente(X) -> Acotada(X)]
+3 SucesionReal(S) AND Cauchy(S)
+4 FORALL X [Convergente(X) -> ExisteLimite(L, X)]
+Q ExisteLimite(L, S)

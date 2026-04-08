@@ -1,7 +1,0 @@
-Animal(f(x)) OR Ama(g(x),x)
-NOT Ama(x,f(x)) OR Ama(g(x),x)
-NOT Animal(y) OR NOT Mata(x,y) OR NOT Ama(z,x)
-NOT Animal(x) OR Ama(Jack,x)
-Gato(Tuna)
-Mata(Jack,Tuna) OR Mata(Curiosidad,Tuna)
-NOT Gato(x) OR Animal(x)

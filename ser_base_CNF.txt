@@ -1,0 +1,8 @@
+1 NOT Base(S, V) OR Independiente(S)
+2 NOT Base(S, V) OR Genera(S, V)
+3 [NOT Independiente(S) OR NOT Genera(S, V)] OR Base(S, V)
+4 NOT Base(S, V) OR Independiente(S)
+5 [NOT Independiente(S) OR Genera(S, V)] OR NOT Base(S, V)
+6 Independiente(A)
+7 NOT Genera(A, R3)
+Q NOT Base(A, R3)

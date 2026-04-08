@@ -1,0 +1,6 @@
+1 [NOT SucesionReal(X) OR NOT Cauchy(X)] OR Convergente(X)
+2 NOT Convergente(X) OR Acotada(X)
+3 SucesionReal(S)
+4 Cauchy(S)
+5 NOT Convergente(X) OR ExisteLimite(L, X)
+Q ExisteLimite(L, S)

@@ -1,0 +1,6 @@
+1 NOT Matriz(M) OR [NOT Invertible(M) OR NOT DeterminanteCero(M)]
+2 NOT Matriz(M) OR [DeterminanteCero(M) OR Invertible(M)]
+3 NOT Invertible(M) OR TieneInversa(M)
+4 Matriz(A)
+5 NOT DeterminanteCero(A)
+Q TieneInversa(A)

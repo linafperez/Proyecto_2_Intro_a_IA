@@ -1,0 +1,5 @@
+1 FORALL S FORALL V [Base(S, V) <-> [Independiente(S) AND Genera(S, V)]]
+2 FORALL S FORALL V [Base(S, V) -> Independiente(S)]
+3 FORALL S FORALL V [Independiente(S) AND NOT [Genera(S, V)] -> NOT [Base(S, V)]]
+4 Independiente(A) AND NOT [Genera(A, R3)]
+Q NOT Base(A, R3)
