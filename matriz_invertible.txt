@@ -1,0 +1,4 @@
+1 FORALL M [Matriz(M) -> [Invertible(M) <-> NOT [DeterminanteCero(M)]]]
+2 FORALL M [Invertible(M) -> TieneInversa(M)]
+3 Matriz(A) AND NOT [DeterminanteCero(A)]
+Q TieneInversa(A)
