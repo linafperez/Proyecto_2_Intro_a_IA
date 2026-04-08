@@ -1,0 +1,2 @@
+python fol_to_cnf.py marco_cesar.txt  para crear el CNF
+python resolution_prover.py marco_cesar_CNF.txt solver
