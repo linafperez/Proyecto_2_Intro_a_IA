@@ -1,33 +1,14 @@
-"""
-cnf_utils.py — shared utilities for CNF conversion and resolution.
 
-Used by:
-  fol_to_cnf.py      — FOL → CNF pipeline (reads a .txt KB, writes *_CNF.txt)
-  resolution_prover.py — resolution refutation prover (reads *_CNF.txt)
-
-Key design decision
-───────────────────
-BinaryTreeNode predicates are stored as  node.data = "Pred()"  with
-  node.left_child  = first argument  (a leaf or nested predicate node)
-  node.right_child = second argument (a leaf or nested predicate node, or None)
-
-The string representation used throughout the prover is the flat infix form
-produced by tree_to_infix(), e.g. "Leal(K1, Cesar)" or "NOT Animal(X)".
-"""
+##este archivo contiene utilidades para convertir entre la representación de árboles binarios y 
+# la representación de fórmulas lógicas en CNF, así como funciones para leer y escribir archivos de CNF con formato específico.
 
 import re
 from BinaryTreeNode import BinaryTreeNode
 
 
-# ══════════════════════════════════════════════════════════════
-#  TREE → STRING  (reused from main.py, now shared)
-# ══════════════════════════════════════════════════════════════
 
 def tree_to_infix(node, is_root=True) -> str:
-    """
-    Serialise a BinaryTreeNode expression tree to an infix string.
-    Binary operators are wrapped in [...] unless they are the root.
-    """
+
     if node is None:
         return ""
 
@@ -52,7 +33,7 @@ def tree_to_infix(node, is_root=True) -> str:
         expr    = f"{data} {var} {formula}"
         return expr if is_root else f"[{expr}]"
 
-    elif "()" in data:                          # predicate node  e.g. "Leal()"
+    elif "()" in data:                          
         name = data.replace("()", "")
         args = []
         if node.left_child:
@@ -61,24 +42,14 @@ def tree_to_infix(node, is_root=True) -> str:
             args.append(tree_to_infix(node.right_child, False))
         return f"{name}({', '.join(args)})"
 
-    else:                                       # variable / constant leaf
+    else:                                       
         return data
 
 
-# ══════════════════════════════════════════════════════════════
-#  TREE → FROZENSET OF LITERAL STRINGS
-#  Replaces resolution_prover's  tokenise → parse → ast_to_literals  pipeline.
-#  Works directly on BinaryTreeNode objects produced by main.py's CNF pipeline.
-# ══════════════════════════════════════════════════════════════
+
 
 def tree_to_literals(node) -> frozenset:
-    """
-    Flatten a CNF clause tree (a pure OR-tree of literals) into a frozenset
-    of literal strings, e.g. frozenset({'NOT Animal(X)', 'Ama(Jack, X)'}).
 
-    Each literal is the infix string of a NOT-subtree or a predicate leaf.
-    AND nodes are handled gracefully (should not appear inside a single clause).
-    """
     if node is None:
         return frozenset()
 
@@ -95,9 +66,7 @@ def tree_to_literals(node) -> frozenset:
     return frozenset({tree_to_infix(node)})
 
 
-# ══════════════════════════════════════════════════════════════
-#  EXTRACT CLAUSES FROM A CNF TREE  (moved from main.py)
-# ══════════════════════════════════════════════════════════════
+
 
 def extract_clauses(node) -> list:
     """
@@ -111,9 +80,6 @@ def extract_clauses(node) -> list:
     return [node]
 
 
-# ══════════════════════════════════════════════════════════════
-#  CLAUSE → DISPLAY STRING  (replaces clause_str in prover)
-# ══════════════════════════════════════════════════════════════
 
 def clause_str(clause: frozenset) -> str:
     """Pretty-print a clause frozenset as 'Lit1 OR Lit2 OR ...'."""
@@ -122,29 +88,10 @@ def clause_str(clause: frozenset) -> str:
     return " OR ".join(sorted(clause))
 
 
-# ══════════════════════════════════════════════════════════════
-#  FILE I/O
-#  parse_cnf_file  — reads a *_CNF.txt file written by fol_to_cnf.py.
-#  The prover calls this instead of its own parse_file().
-#  fol_to_cnf.py calls write_cnf_file() to produce the same format.
-# ══════════════════════════════════════════════════════════════
+
 
 def _parse_cnf_line(content: str) -> frozenset:
-    """
-    Parse one CNF clause line (already stripped of its numeric label) into a
-    frozenset of literal strings.
 
-    The format written by fol_to_cnf.py uses tree_to_infix(), so it contains
-    'NOT', 'OR', and '[...]' grouping.  We walk the text token-by-token using a
-    tiny recursive-descent parser that produces BinaryTreeNode trees and then
-    calls tree_to_literals() — reusing the same tree machinery as the rest of
-    the pipeline.
-
-    Alternatively (simpler path): since the clause is already a flat disjunction
-    of literals at this point, we can tokenise and group without a full parser.
-    We use the full parser for correctness with deeply nested brackets like
-    [[NOT A OR NOT B] OR NOT C].
-    """
     from BinaryTree import BinaryTree   # local import to avoid circular deps
 
     tree_root = BinaryTree.build_expression_tree(content)
@@ -152,14 +99,7 @@ def _parse_cnf_line(content: str) -> frozenset:
 
 
 def parse_cnf_file(path: str):
-    """
-    Read a *_CNF.txt file produced by fol_to_cnf.py.
 
-    Returns
-    -------
-    clauses    : list of (label_str, frozenset_of_literals, raw_line_text)
-    query_text : str  — the raw query expression (after 'Q ')
-    """
     clauses    = []
     query_text = None
 
@@ -186,10 +126,7 @@ def parse_cnf_file(path: str):
 
 
 def write_cnf_file(output_path: str, cnf_trees: list, query: str) -> None:
-    """
-    Write a list of CNF clause trees to *_CNF.txt format.
-    Mirrors the output block at the end of the original main.py.
-    """
+
     with open(output_path, "w", encoding="utf-8") as f:
         for i, tree in enumerate(cnf_trees, start=1):
             f.write(f"{i} {tree_to_infix(tree)}\n")

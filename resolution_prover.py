@@ -1,19 +1,4 @@
-"""
-resolution_prover.py  —  Resolution Theorem Prover (Proof by Refutation)
-
-Refactored from resolution_prover_2.py.  Changes:
-  • tokenise / parse_expr / parse_or / parse_and / parse_not / parse_atom /
-    parse_clause_text / ast_to_literals  ALL REMOVED.
-    Replaced by cnf_utils.parse_cnf_file() which reuses BinaryTree.build_expression_tree()
-    and cnf_utils.tree_to_literals() — the same machinery as fol_to_cnf.py.
-  • clause_str moved to cnf_utils.py (imported here).
-  • Accepts both *_CNF.txt files AND raw FOL files (auto-detected by content).
-    Pass a raw FOL file → the CNF pipeline runs in-memory via fol_to_cnf.get_cnf_clauses().
-
-Usage:
-    python resolution_prover.py problem_CNF.txt   # pre-converted CNF file
-    python resolution_prover.py problem.txt        # raw FOL file (auto-converts)
-"""
+## ESTE ARCHIVO IMPLEMENTA UN PROVER DE RESOLUCIÓN PARA FOL, USANDO LAS CLÁUSULAS CNF PRODUCIDAS POR fol_to_cnf.py. ##
 
 import sys
 import re
@@ -23,15 +8,10 @@ from fol_to_cnf import get_cnf_clauses
 from BinaryTree import BinaryTree
 
 
-# ══════════════════════════════════════════════════════════════
-#  INPUT LOADING  — CNF file  OR  raw FOL file
-# ══════════════════════════════════════════════════════════════
+
 
 def _is_cnf_file(path: str) -> bool:
-    """
-    A file is already in CNF format if its name ends in _CNF.txt,
-    or if its numbered lines contain no FOL-only keywords (->, <->, FORALL, EXISTS).
-    """
+
     if path.endswith("_CNF.txt"):
         return True
     fol_keywords = {"->", "<->", "FORALL", "EXISTS"}
@@ -47,14 +27,7 @@ def _is_cnf_file(path: str) -> bool:
 
 
 def load_problem(path: str):
-    """
-    Load a problem file (CNF or raw FOL).
 
-    Returns
-    -------
-    clauses    : list of (label_str, frozenset_of_literals, raw_text)
-    query_text : str
-    """
     if _is_cnf_file(path):
         return parse_cnf_file(path)
     else:
@@ -64,13 +37,10 @@ def load_problem(path: str):
         return clauses, query_text
 
 
-# ══════════════════════════════════════════════════════════════
-#  UNIFICATION  (Robinson's algorithm)
-#  Works on flat literal strings produced by tree_to_infix().
-# ══════════════════════════════════════════════════════════════
+
 
 def _split_args(s: str) -> list:
-    """Split comma-separated args respecting nested parentheses."""
+  
     args, depth, current = [], 0, []
     for ch in s:
         if ch == "(":
@@ -87,29 +57,17 @@ def _split_args(s: str) -> list:
 
 
 def _parse_predicate(atom: str):
-    """
-    'Leal(K1, Cesar)'  -> ('Leal', ['K1', 'Cesar'])
-    'Animal(F0(X))'    -> ('Animal', ['F0(X)'])
-    'Marco'            -> ('Marco', [])
-    """
+
     atom = atom.strip()
     m = re.match(r"^([A-Za-z_]\w*)\((.+)\)$", atom)
     if m:
         return m.group(1), _split_args(m.group(2))
     return atom, []
 
+##ALGORITMO DE UNIFICACIÓN, RENOMBRADO DE VARIABLES, Y RESOLUCIÓN DE CLÁUSULAS##                
 
 def is_variable(s: str) -> bool:
-    """
-    Unifiable terms:
-      - Single uppercase letters X, Y, Z
-      - Lowercase identifiers x, y, z
-      - Skolem constants K0, K1 ... (from fol_to_cnf's Skolemization)
-      - Renamed variants X_r1, K0_r2 ... (produced by _rename_vars)
-    Ground constants (non-unifiable):
-      - Multi-char uppercase words: Marco, Cesar, Jack, Tuna ...
-      - Skolem functions F0(X), F1(X) are compound terms, handled by _unify_terms
-    """
+
     if not s:
         return False
     base = re.sub(r"(_r\d+)+$", "", s)          # strip all _rN renaming suffixes
@@ -120,7 +78,7 @@ def is_variable(s: str) -> bool:
 
 
 def _apply_subst(term: str, subst: dict) -> str:
-    """Apply substitution, recursing into Skolem-function arguments."""
+
     seen, t = set(), term
     while t in subst and t not in seen:
         seen.add(t); t = subst[t]
@@ -133,7 +91,7 @@ def _apply_subst(term: str, subst: dict) -> str:
 
 
 def _apply_subst_to_literal(lit: str, subst: dict) -> str:
-    """Apply substitution to a full literal string."""
+  
     if not subst:
         return lit
     negated = lit.startswith("NOT ")
@@ -178,7 +136,6 @@ def _unify_terms(t1: str, t2: str, subst: dict):
 
 
 def _unify_atoms(atom1: str, atom2: str):
-    """Unify two atom strings (no NOT prefix). Returns substitution dict or None."""
     n1, a1 = _parse_predicate(atom1)
     n2, a2 = _parse_predicate(atom2)
     if n1 != n2 or len(a1) != len(a2):
@@ -194,9 +151,7 @@ def _negate_literal(lit: str) -> str:
     return lit[4:] if lit.startswith("NOT ") else "NOT " + lit
 
 
-# ══════════════════════════════════════════════════════════════
-#  VARIABLE RENAMING & CANONICALISATION
-# ══════════════════════════════════════════════════════════════
+
 
 _rename_counter = [0]
 
@@ -211,7 +166,7 @@ def _collect_vars(term: str, out: set):
 
 
 def _rename_vars(clause: frozenset) -> frozenset:
-    """Give all variables in a clause fresh suffixed names."""
+    
     vars_found = set()
     for lit in clause:
         atom = lit[4:] if lit.startswith("NOT ") else lit
@@ -227,10 +182,7 @@ def _rename_vars(clause: frozenset) -> frozenset:
 
 
 def _canonicalize_clause(clause: frozenset) -> frozenset:
-    """
-    Rename variables to canonical v0, v1, v2 … for duplicate detection,
-    regardless of accumulated _rN suffix history.
-    """
+ 
     mapping, counter = {}, [0]
 
     def canon_term(t):
@@ -254,15 +206,10 @@ def _canonicalize_clause(clause: frozenset) -> frozenset:
     return frozenset(canon_lit(lit) for lit in clause)
 
 
-# ══════════════════════════════════════════════════════════════
-#  RESOLUTION STEP
-# ══════════════════════════════════════════════════════════════
+
 
 def _resolve_clauses(ci: frozenset, cj: frozenset):
-    """
-    Yield (resolvent, pivot_literal, substitution) for each complementary
-    literal pair that unifies between ci and cj.
-    """
+
     ci = _rename_vars(ci)
     cj = _rename_vars(cj)
 
@@ -292,19 +239,13 @@ def _resolve_clauses(ci: frozenset, cj: frozenset):
             yield resolvent, _apply_subst_to_literal(lit_i, subst), subst
 
 
-# ══════════════════════════════════════════════════════════════
-#  RESOLUTION REFUTATION LOOP  (worklist / saturation)
-# ══════════════════════════════════════════════════════════════
+
 
 def resolution_refutation(named_clauses):
-    """
-    named_clauses: list of (label_str, frozenset_of_literals)
 
-    Returns (proved, proof_steps, db_clauses, db_parents).
-    """
-    db_clauses   = {}   # idx → frozenset
-    db_parents   = {}   # idx → (p1, p2, pivot, label)
-    canonical_db = {}   # canonical frozenset → idx  (O(1) duplicate check)
+    db_clauses   = {}   
+    db_parents   = {}   
+    canonical_db = {}   
     counter      = [0]
 
     def add(clause, p1=None, p2=None, pivot=None, label=None):
@@ -348,7 +289,7 @@ def resolution_refutation(named_clauses):
             if proved:
                 break
 
-    # Reconstruct the minimal proof path leading to the empty clause
+    
     proof_steps = []
     if proved and empty_idx is not None:
         seen = set()
@@ -364,9 +305,7 @@ def resolution_refutation(named_clauses):
     return proved, proof_steps, db_clauses, db_parents
 
 
-# ══════════════════════════════════════════════════════════════
-#  DISPLAY
-# ══════════════════════════════════════════════════════════════
+
 
 W = 68
 
@@ -427,9 +366,7 @@ def print_proof(proved, proof_steps, db_clauses, db_parents,
     print("═" * W)
 
 
-# ══════════════════════════════════════════════════════════════
-#  ENTRY POINT
-# ══════════════════════════════════════════════════════════════
+
 
 def main():
     if len(sys.argv) < 2:

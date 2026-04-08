@@ -1,16 +1,5 @@
-"""
-fol_to_cnf.py  —  First-Order Logic → Conjunctive Normal Form converter.
 
-Refactored from main.py.  Changes:
-  • All logic is now inside functions (no module-level side-effects).
-  • tree_to_infix, extract_clauses, write_cnf_file moved to cnf_utils.py.
-  • Can be imported by resolution_prover.py to run end-to-end without
-    writing an intermediate file (see get_cnf_clauses()).
-
-Usage (CLI, same as before):
-    python fol_to_cnf.py input_file.txt
-    → writes input_file_CNF.txt
-"""
+##ESTE ARCHIVO SE ENCARGA DE TRANSFORMAR LAS REGLAS DE FOL A CNF, PARA QUE EL PROVER PUEDA USARLAS.##
 
 import sys
 from BinaryTree     import BinaryTree
@@ -18,9 +7,7 @@ from BinaryTreeNode import BinaryTreeNode
 from cnf_utils      import extract_clauses, write_cnf_file, tree_to_literals
 
 
-# ══════════════════════════════════════════════════════════════
-#  HELPERS
-# ══════════════════════════════════════════════════════════════
+
 
 def _copy_tree(node):
     """Deep-copy a BinaryTreeNode subtree."""
@@ -32,12 +19,9 @@ def _copy_tree(node):
     return new_node
 
 
-# ══════════════════════════════════════════════════════════════
-#  CNF TRANSFORMATION STEPS  (unchanged logic from main.py)
-# ══════════════════════════════════════════════════════════════
 
 def del_biconditional(node):
-    """Replace α <-> β  with  (α -> β) AND (β -> α)."""
+  
     if node is None:
         return None
     node.set_left_child(del_biconditional(node.left_child))
@@ -63,7 +47,7 @@ def del_biconditional(node):
 
 
 def del_implication(node):
-    """Replace α -> β  with  (NOT α) OR β."""
+  
     if node is None:
         return None
     node.set_left_child(del_implication(node.left_child))
@@ -84,7 +68,7 @@ def del_implication(node):
 
 
 def apply_negation(node):
-    """Push NOT inward (De Morgan, double-negation, quantifier duality)."""
+   
     if node is None:
         return None
 
@@ -166,7 +150,7 @@ def standardize_variables(node, mapping=None, used_vars=None):
 
 
 def move_quantifiers_left(node):
-    """Pull quantifiers outward to build a prenex form."""
+   
     if node is None:
         return None
 
@@ -298,9 +282,7 @@ def distribute_or_over_and(node):
     return node
 
 
-# ══════════════════════════════════════════════════════════════
-#  PUBLIC API
-# ══════════════════════════════════════════════════════════════
+
 
 def fol_rule_to_cnf_trees(rule_tree) -> list:
     """
@@ -362,9 +344,7 @@ def get_cnf_clauses(input_path: str):
     return clauses, query_text
 
 
-# ══════════════════════════════════════════════════════════════
-#  CLI ENTRY POINT  (same behaviour as original main.py)
-# ══════════════════════════════════════════════════════════════
+
 
 def main():
     if len(sys.argv) < 2:
